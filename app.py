@@ -9,9 +9,8 @@ language, raw_address, customer_address, raw_order, pizza_size, pizza_topping, p
 def root():
     global language, raw_address, customer_address, raw_order, pizza_size, pizza_topping, play_audio
     language, raw_address, customer_address, raw_order, pizza_size, pizza_topping, play_audio = None, None, None, None, None, None, None
-
     # remove the existing files in the folder
-    file = ["info.wav", "info_record.wav", "info_repeat.wav", "topping.wav", "topping_record.wav", "topping_repeat.wav"]
+    file = ["info.wav", "info_record.wav", "info_repeat.wav", "topping.wav", "topping_record.wav", "topping_repeat.wav", "order.wav"]
     for i in file:
         bash_command = str("find . -path \*/" + i + " -delete")
         os.system(bash_command)
@@ -29,6 +28,16 @@ def get_info():
     return render_template("getInfo.html")
 
 
+@app.route("/get_topping", methods=["POST"])
+def get_topping():
+    global play_audio
+    play_audio = "topping.wav"
+    result = "At La AI Pizza Plaza, we offer a mouth-watering selection of giant, large, and medium pizzas, piled high with 8 delectable toppings to choose from. " \
+             "See the options in the picture below and indulge in the perfect pizza for you!"
+    text_to_speech(result, play_audio, language)
+    return render_template("getTopping.html")
+
+
 @app.route("/get_info_redirect", methods=["GET", "POST"])
 def get_info_redirect():
     global customer_address, play_audio
@@ -38,16 +47,6 @@ def get_info_redirect():
              "? If not, no worries, just give the recording again button a tap."
     text_to_speech(result, play_audio, language)
     return render_template("getInfoRedirect.html", customerAddress=customer_address)
-
-
-@app.route("/get_topping", methods=["POST"])
-def get_topping():
-    global play_audio
-    play_audio = "topping.wav"
-    result = "At La AI Pizza Plaza, we offer a mouth-watering selection of giant, large, and medium pizzas, piled high with 8 delectable toppings to choose from. " \
-             "See the options in the picture below and indulge in the perfect pizza for you!"
-    text_to_speech(result, play_audio, language)
-    return render_template("getTopping.html")
 
 
 @app.route("/get_topping_redirect", methods=["GET", "POST"])
@@ -82,21 +81,6 @@ def get_order():
     return render_template("getOrder.html", customerAddress=customer_address, orderSize=pizza_size[0], orderTopping=pizza_topping)
 
 
-@app.route("/get_info_upload_wav", methods=["POST"])
-def get_info_upload_wav():
-    global raw_address
-    if "info_upload_wav" not in request.files:
-        return "No audio file found"
-    else:
-        file = request.files["info_upload_wav"]
-        if file.filename == "":
-            return "No audio file selected"
-        else:
-            raw_address = speech_to_text(file)
-            print(raw_address)
-    return redirect(url_for("get_info_redirect"))
-
-
 @app.route("/get_info_record_wav", methods=["POST"])
 def get_info_record_wav():
     global raw_address
@@ -111,23 +95,6 @@ def get_info_record_wav():
             raw_address = speech_to_text("info_record.wav")
             print(raw_address)
     return render_template("getInfoRedirect.html")
-
-
-@app.route("/get_topping_upload_wav", methods=["POST"])
-def get_topping_upload_wav():
-    global raw_order
-    if "topping_upload_wav" not in request.files:
-        return "No audio file found"
-    else:
-        file = request.files["topping_upload_wav"]
-        if file.filename == "":
-            return "No audio file selected"
-        else:
-            raw_order = speech_to_text(file)
-            print(raw_order)
-    return render_template("getToppingRedirect.html")
-
-
 @app.route("/get_topping_record_wav", methods=["POST"])
 def get_topping_record_wav():
     global raw_order
@@ -148,6 +115,6 @@ def get_topping_record_wav():
 def play_local_wav():
     return Response(play_local_wav_file(play_audio), mimetype="audio/x-wav")
 
-
 if __name__ == "__main__":
+    
     app.run(debug=False, use_reloader=True, port=8080, host="0.0.0.0")
